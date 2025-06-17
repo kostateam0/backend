@@ -5,7 +5,7 @@
 //   res.send("Hello, World!");
 // });
 
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import session from "express-session";
 import cors from "cors";
 import passport from "passport";
@@ -15,14 +15,23 @@ import userRouter from "auth-kit-backend/dist/routes/userRouter";
 import adminRouter from "auth-kit-backend/dist/routes/adminRouter";
 import swaggerSpec from "auth-kit-backend/dist/config/swagger";
 import swaggerUi from "swagger-ui-express";
-
+import dotenv from "dotenv";
 import "auth-kit-backend/dist/config/passport"; // ⚠️ 꼭 필요합니다
+import summonerRoute from "./routes/lol/summonerRoute";
 
 const app = express();
 const PORT = 4000;
+dotenv.config();
 
 app.use(cors());
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+//   next();
+// });
 app.use(express.json());
+app.use("/api/summoner", summonerRoute);
 app.use(
   session({
     secret: "your-secret",
