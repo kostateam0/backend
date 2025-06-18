@@ -9,94 +9,98 @@ export const getSummonerInfo = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "서버 환경 변수 오류" });
   }
 
-  const { gameName, tagLine } = req.query;
-  if (!gameName || !tagLine) {
-    return res.status(400).json({ error: "gameName과 tagLine이 필요합니다." });
+  const { summonerName, tag, region } = req.query as {
+    summonerName: string;
+    tag: string;
+    region: string;
+  };
+  if (!summonerName || !tag) {
+    return res.status(400).json({ error: "summonerName과 tag이 필요합니다." });
+  }
+
+  // region 값을 받아서 해당 region의 API 도메인을 반환하는 함수 (TypeScript)
+  function getAccountApiDomain(region: string): string {
+    const accountRegionMap: { [key: string]: string } = {
+      kr: "asia",
+      jp1: "asia",
+      eun1: "europe",
+      euw1: "europe",
+      tr1: "europe",
+      ru: "europe",
+      na1: "americas",
+      br1: "americas",
+      la1: "americas",
+      la2: "americas",
+      oc1: "americas",
+    };
+    return accountRegionMap[region] || "asia";
   }
 
   try {
+    // region에 맞는 도메인 사용
+    const accountApiDomain = getAccountApiDomain(region);
+    console.log(`accountApiDomain: ${accountApiDomain}`);
+
     // account-v1로 puuid 얻기
     const accountRes = await fetch(
-      `https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
-        String(gameName)
-      )}/${encodeURIComponent(String(tagLine))}`,
+      `https://${accountApiDomain}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
+        summonerName
+      )}/${encodeURIComponent(tag)}`,
       {
         headers: { "X-Riot-Token": process.env.API_KEY },
       }
     );
-    if (!accountRes.ok) {
-      const err = await accountRes.json().catch(() => ({}));
-      throw new Error(
-        `account-v1 API 호출 실패: ${
-          err.status?.message || accountRes.statusText
-        }`
-      );
-    }
+    if (!accountRes.ok) throw new Error("account-v1 API 호출 실패");
     const accountData = await accountRes.json();
     const puuid = accountData.puuid;
+    console.log(`puuid: ${puuid}`);
     if (!puuid) {
-      return res.status(404).json({ error: "소환사 정보를 찾을 수 없습니다." });
+      return res.json({ error: "소환사 정보를 찾을 수 없습니다." });
     }
+    console.log(`소환사 이름: ${summonerName}#${tag}`);
 
     // puuid로 summoner-v4에서 소환사 정보 얻기
     const summonerRes = await fetch(
-      `https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
       {
         headers: { "X-Riot-Token": process.env.API_KEY },
       }
     );
-    if (!summonerRes.ok) {
-      const err = await summonerRes.json().catch(() => ({}));
-      throw new Error(
-        `summoner-v4 API 호출 실패: ${
-          err.status?.message || summonerRes.statusText
-        }`
-      );
-    }
+    if (!summonerRes.ok) throw new Error("summoner-v4 API 호출 실패");
     const data = await summonerRes.json();
+    console.log(`소환사 레벨: ${data.summonerLevel}`);
+    console.log(`소환사 아이콘 번호: ${data.profileIconId}`);
 
     // 가장 최근 경기 1개 가져오기
     const matchOneRes = await fetch(
-      `https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
+      `https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
       {
         headers: { "X-Riot-Token": process.env.API_KEY },
       }
     );
-    if (!matchOneRes.ok) {
-      const err = await matchOneRes.json().catch(() => ({}));
-      throw new Error(
-        `matchOne API 호출 실패: ${
-          err.status?.message || matchOneRes.statusText
-        }`
-      );
-    }
+    if (!matchOneRes.ok) throw new Error("matchOne API 호출 실패");
     const matchOneData = await matchOneRes.json();
+    console.log("matchOne:", matchOneData);
     const matchId = matchOneData[0];
-    if (!matchId) {
-      return res
-        .status(404)
-        .json({ error: "최근 경기 정보를 찾을 수 없습니다." });
-    }
 
     const matchDetailRes = await fetch(
-      `https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+      `https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
       {
         headers: { "X-Riot-Token": process.env.API_KEY },
       }
     );
-    if (!matchDetailRes.ok) {
-      const err = await matchDetailRes.json().catch(() => ({}));
-      throw new Error(
-        `matchDetail API 호출 실패: ${
-          err.status?.message || matchDetailRes.statusText
-        }`
-      );
-    }
+    if (!matchDetailRes.ok) throw new Error("matchDetail API 호출 실패");
     const match = await matchDetailRes.json();
+    console.log("matchDetail:", match);
 
-    res.json({ gameName, tagLine, user: data, match });
-  } catch (error: any) {
-    console.error("에러:", error.message);
-    res.status(500).json({ error: error.message || "서버 오류" });
+    res.json({ summonerName, tag, user: data, match });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("에러:", error.message);
+      res.json({ error: error.message });
+    } else {
+      console.error("에러:", error);
+      res.json({ error: String(error) });
+    }
   }
 };
