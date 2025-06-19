@@ -36,7 +36,7 @@ model User {
 }
 
 model Rank {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
   summonerId   String  @unique
   puuid        String  @unique
   leaguePoints Int
@@ -50,4 +50,18 @@ model Rank {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  profile   Profile? @relation(fields: [puuid], references: [puuid])
+}
+
+model Profile {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  accountId     String   @unique
+  puuid         String   @unique
+  summonerName  String
+  profileIconId Int
+  revisionDate  Int
+  summonerLevel Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  rank          Rank?
 }
