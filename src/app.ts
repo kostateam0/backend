@@ -17,6 +17,7 @@ import matchRoute from "./routes/lol/matchRoute";
 import swaggerUi from "swagger-ui-express";
 import lolSwaggerSpec from "./config/swagger.lol";
 import authkitSwaggerSpec from "./config/swagger.authkit";
+import leaderBoardRoute from "./routes/lol/leaderBoardRoute";
 
 const app = express();
 const PORT = 4000;
@@ -56,5 +57,8 @@ app.use("/docs/lol", lolDocsRouter);
 app.get("/", (req, res) => {
   res.send("Hello, Riot API 서버가 실행 중입니다.");
 });
+
+// API Route
+app.use('/api/lol/leaderboard', leaderBoardRoute)
 
 export default app;
