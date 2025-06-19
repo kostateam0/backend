@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@prisma/client": "^6.10.0",
     "auth-kit-backend": "^1.0.2",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

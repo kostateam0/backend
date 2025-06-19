@@ -3,6 +3,7 @@ import * as leaderBoardController from "../../controllers/lol/leaderBoardControl
 
 const router = Router();
 
-router.get("/", leaderBoardController.getLeaderBoard);
+router.get("/save", leaderBoardController.saveLeaderBoard);
+router.get("/load", leaderBoardController.getLeaderBoard);
 
 export default router;
