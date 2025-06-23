@@ -1,5 +1,5 @@
 import express from "express";
-import { getMatchDetail } from "../../controllers/lol/matchController";
+import { getMatchDetail, getFullMatches } from "../../controllers/lol/matchController";
 
 const router = express.Router();
 
@@ -21,5 +21,8 @@ const router = express.Router();
  *         description: 매치 상세 정보 객체 반환
  */
 router.get("/:matchId", getMatchDetail);
+
+
+router.get("/full/:puuid", getFullMatches);
 
 export default router;
