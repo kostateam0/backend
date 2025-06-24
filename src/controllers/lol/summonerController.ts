@@ -144,9 +144,12 @@ export const getSummonerStats = async (req: Request, res: Response) => {
     // 각 경기 상세 가져오기
     const matchResults = await Promise.all(
       matchIds.map((matchId: string) =>
-        fetch(`https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/${matchId}`, {
-          headers: { "X-Riot-Token": process.env.API_KEY as string },
-        }).then((r) => r.json())
+        fetch(
+          `https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+          {
+            headers: { "X-Riot-Token": process.env.API_KEY as string },
+          }
+        ).then((r) => r.json())
       )
     );
 
@@ -157,7 +160,9 @@ export const getSummonerStats = async (req: Request, res: Response) => {
       wins = 0;
 
     matchResults.forEach((match: any) => {
-      const player = match.info.participants.find((p: any) => p.puuid === puuid);
+      const player = match.info.participants.find(
+        (p: any) => p.puuid === puuid
+      );
       if (player) {
         totalKills += player.kills;
         totalDeaths += player.deaths;
@@ -166,7 +171,9 @@ export const getSummonerStats = async (req: Request, res: Response) => {
       }
     });
 
-    const avgKDA = `${(totalKills / matchResults.length).toFixed(1)} / ${(totalDeaths / matchResults.length).toFixed(1)} / ${(totalAssists / matchResults.length).toFixed(1)}`;
+    const avgKDA = `${(totalKills / matchResults.length).toFixed(1)} / ${(
+      totalDeaths / matchResults.length
+    ).toFixed(1)} / ${(totalAssists / matchResults.length).toFixed(1)}`;
     const winRate = `${((wins / matchResults.length) * 100).toFixed(1)}%`;
 
     res.json({ avgKDA, winRate, totalGames: matchResults.length });
@@ -182,29 +189,46 @@ export const getChampionStats = async (req: Request, res: Response) => {
   try {
     const matchIdsRes = await fetch(
       `https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20`,
-      { headers: { "X-Riot-Token": process.env.API_KEY as string }}
+      { headers: { "X-Riot-Token": process.env.API_KEY as string } }
     );
     const matchIds = await matchIdsRes.json();
 
     const matchResults = await Promise.all(
       matchIds.map((matchId: string) =>
-        fetch(`https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/${matchId}`, {
-          headers: { "X-Riot-Token": process.env.API_KEY as string },
-        }).then((r) => r.json())
+        fetch(
+          `https://${accountApiDomain}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+          {
+            headers: { "X-Riot-Token": process.env.API_KEY as string },
+          }
+        ).then((r) => r.json())
       )
     );
 
     const championMap: Record<
       string,
-      { games: number; wins: number; kills: number; deaths: number; assists: number }
+      {
+        games: number;
+        wins: number;
+        kills: number;
+        deaths: number;
+        assists: number;
+      }
     > = {};
 
     matchResults.forEach((match: any) => {
-      const player = match.info.participants.find((p: any) => p.puuid === puuid);
+      const player = match.info.participants.find(
+        (p: any) => p.puuid === puuid
+      );
       if (!player) return;
       const champ = player.championName;
       if (!championMap[champ]) {
-        championMap[champ] = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
+        championMap[champ] = {
+          games: 0,
+          wins: 0,
+          kills: 0,
+          deaths: 0,
+          assists: 0,
+        };
       }
       championMap[champ].games++;
       if (player.win) championMap[champ].wins++;
@@ -217,7 +241,9 @@ export const getChampionStats = async (req: Request, res: Response) => {
       championName,
       games: stats.games,
       winRate: `${((stats.wins / stats.games) * 100).toFixed(1)}%`,
-      avgKDA: `${(stats.kills / stats.games).toFixed(1)} / ${(stats.deaths / stats.games).toFixed(1)} / ${(stats.assists / stats.games).toFixed(1)}`,
+      avgKDA: `${(stats.kills / stats.games).toFixed(1)} / ${(
+        stats.deaths / stats.games
+      ).toFixed(1)} / ${(stats.assists / stats.games).toFixed(1)}`,
     }));
 
     res.json(result);
@@ -234,18 +260,36 @@ export const getSeasonHistory = async (req: Request, res: Response) => {
     // 먼저 summonerId를 얻기 위해 puuid로 summoner 데이터 호출
     const summonerRes = await fetch(
       `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
-      { headers: { "X-Riot-Token": process.env.API_KEY as string }}
+      { headers: { "X-Riot-Token": process.env.API_KEY as string } }
     );
     const summonerData = await summonerRes.json();
 
     const leagueRes = await fetch(
       `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerData.id}`,
-      
-      {headers: { "X-Riot-Token": process.env.API_KEY as string }}
+
+      { headers: { "X-Riot-Token": process.env.API_KEY as string } }
     );
     const rankData = await leagueRes.json();
 
     res.json({ tierHistory: rankData }); // 배열 형태로 반환됨
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+export const getSummonerChampMastery = async (req: Request, res: Response) => {
+  const { puuid } = req.params;
+  const region = "kr";
+
+  try {
+    const masteryRes = await fetch(
+      `https://${region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`,
+      { headers: { "X-Riot-Token": process.env.API_KEY as string } }
+    );
+    if (!masteryRes.ok) throw new Error("챔피언 마스터리 API 호출 실패");
+
+    const masteryData = await masteryRes.json();
+    res.json(masteryData);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }

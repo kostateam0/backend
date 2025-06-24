@@ -5,6 +5,7 @@ import {
   getMatchList,
   getChampionStats,
   getSeasonHistory,
+  getSummonerChampMastery,
 } from "../../controllers/lol/summonerController";
 
 const router = express.Router();
@@ -123,4 +124,5 @@ router.get("/:puuid/champion-stats", getChampionStats);
  */
 router.get("/:puuid/season-history", getSeasonHistory);
 
+router.get("/:puuid/masteries", getSummonerChampMastery);
 export default router;
