@@ -13,6 +13,9 @@ import leaderBoardRoute from "./routes/lol/leaderBoardRoute";
 
 import swaggerUi from "swagger-ui-express";
 import lolSwaggerSpec from "./config/swagger.lol";
+import authkitSwaggerSpec from "./config/swagger.authkit";
+import feeedRoute from "./routes/lol/feedRoute";
+
 
 const app = express();
 const PORT = 4000;
@@ -43,6 +46,9 @@ app.use("/authkit", (req, res, next) => {
 }, AuthKit());
 
 // Swagger
+app.use('/api/feed', feeedRoute);
+
+// 🔥 LoL Swagger 라우터
 const lolDocsRouter = express.Router();
 lolDocsRouter.use("/", swaggerUi.serve);
 lolDocsRouter.get("/", swaggerUi.setup(lolSwaggerSpec));
@@ -52,5 +58,8 @@ app.use("/docs/lol", lolDocsRouter);
 app.get("/", (req, res) => {
   res.send("Hello, Riot API 서버가 실행 중입니다.");
 });
+
+// API Route
+app.use("/api/lol/leaderboard", leaderBoardRoute);
 
 export default app;

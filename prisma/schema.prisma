@@ -65,3 +65,11 @@ model Profile {
   updatedAt     DateTime @updatedAt
   rank          Rank?
 }
+
+model Feed {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  userID    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
