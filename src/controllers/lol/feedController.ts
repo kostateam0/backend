@@ -52,5 +52,20 @@ export const updateFeed: RequestHandler = async (req, res, next) => {
 };
 
 export const deleteFeed: RequestHandler = async (req, res, next) => {
-  console.log("deleteFeed called");
+  const { id } = req.params;
+
+  try {
+    const deletedFeed = await prisma.feed.delete({
+      where: { id: id },
+    });
+    res.status(200).json({
+      message: "Feed deleted successfully",
+      data: deletedFeed,
+    });
+  } catch (error) {
+    console.error("Error deleting feed:", error);
+    res.status(500).json({
+      error: "Failed to delete feed",
+    });
+  }
 };
