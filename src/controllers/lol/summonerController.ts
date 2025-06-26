@@ -294,3 +294,20 @@ export const getSummonerChampMastery = async (req: Request, res: Response) => {
     res.status(500).json({ error: (error as Error).message });
   }
 };
+
+export const getSummonerRankTier = async (req: Request, res: Response) => {
+  const { puuid } = req.params;
+  const region = "kr";
+
+  try {
+    const summonerRankres = await fetch(
+      `https://${region}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`,
+      { headers: { "X-Riot-Token": process.env.API_KEY as string } }
+    );
+    if (!summonerRankres.ok) throw new Error("랭크 티어 API 호출 실패");
+    const summonerRankData = await summonerRankres.json();
+    res.json(summonerRankData);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};

@@ -21,15 +21,19 @@ const app = express();
 const PORT = 4000;
 
 app.use(express.json());
-app.use(session({
-  secret: "your-secret",
-  resave: false,
-  saveUninitialized: false,
-}));
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
+app.use(
+  session({
+    secret: "your-secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -39,11 +43,15 @@ app.use("/api/summoner", summonerRoute);
 app.use("/api/match", matchRoute);
 app.use("/api/lol/leaderboard", leaderBoardRoute);
 
-// ✅ AuthKit 전체 라우터를 한 번에 등록  
-app.use("/authkit", (req, res, next) => {
-  console.log("✅ AuthKit 요청:", req.method, req.path);
-  next();
-}, AuthKit());
+// ✅ AuthKit 전체 라우터를 한 번에 등록
+app.use(
+  "/authkit",
+  (req, res, next) => {
+    console.log("✅ AuthKit 요청:", req.method, req.path);
+    next();
+  },
+  AuthKit()
+);
 
 // Swagger
 app.use('/api/feed', feeedRoute);
