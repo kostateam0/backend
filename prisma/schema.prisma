@@ -67,9 +67,22 @@ model Profile {
 }
 
 model Feed {
+  feedID    String    @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  userID    String
+  imageUrl  String?   @default("")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Comment   Comment[]
+}
+
+model Comment {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   content   String
   userID    String
+  feedID    String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  feed Feed @relation(fields: [feedID], references: [feedID])
 }

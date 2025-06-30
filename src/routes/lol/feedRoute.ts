@@ -1,19 +1,12 @@
 import { Router } from "express";
+import * as feedController from "../../controllers/lol/feedController";
 
 const router = Router();
 
-import {
-  getFeedAll,
-  getFeed,
-  createFeed,
-  updateFeed,
-  deleteFeed,
-} from "../../controllers/lol/feedController";
-
-router.get("/", getFeedAll);
-router.post("/", createFeed);
-router.get("/:id", getFeed);
-router.put("/:id", updateFeed);
-router.delete("/:id", deleteFeed);
+router.get("/", feedController.getFeedAll);
+router.get("/:feedID", feedController.getFeed);
+router.post("/", feedController.createFeed);
+router.put("/:feedID", feedController.updateFeed);
+router.delete("/:feedID", feedController.deleteFeed);
 
 export default router;
