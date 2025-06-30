@@ -17,6 +17,10 @@ import authkitSwaggerSpec from "./config/swagger.authkit";
 import feeedRoute from "./routes/lol/feedRoute";
 
 
+// ✅ 새로 추가한 라우터들
+import betRoute from "./routes/lol/betRoute";
+import esportsRoute from "./routes/lol/esportsRoute";
+
 const app = express();
 const PORT = 4000;
 
@@ -42,6 +46,10 @@ app.use(passport.session());
 app.use("/api/summoner", summonerRoute);
 app.use("/api/match", matchRoute);
 app.use("/api/lol/leaderboard", leaderBoardRoute);
+
+// ✅ 베팅 및 e스포츠 API
+app.use("/api/bet", betRoute);                        // 베팅 관련 API
+app.use("/api/esports", esportsRoute); // ✅ 등록 완료 → /api/esports/upcoming
 
 // ✅ AuthKit 전체 라우터를 한 번에 등록
 app.use(
