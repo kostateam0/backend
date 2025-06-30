@@ -115,6 +115,7 @@ export const updateFeed: RequestHandler = async (req, res, next) => {
 export const deleteFeed: RequestHandler = async (req, res, next) => {
   try {
     const { feedID } = req.params;
+    console.log(feedID)
     const prevData = await prisma.feed.findUnique({
       where: {
         feedID: String(feedID),
@@ -130,6 +131,7 @@ export const deleteFeed: RequestHandler = async (req, res, next) => {
         feedID: String(feedID),
       },
     });
+    console.log(deleteData)
 
     res.status(200).json({
       data: deleteData,
