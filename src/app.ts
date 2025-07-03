@@ -15,6 +15,7 @@ import swaggerUi from "swagger-ui-express";
 import lolSwaggerSpec from "./config/swagger.lol";
 import authkitSwaggerSpec from "./config/swagger.authkit";
 import feeedRoute from "./routes/lol/feedRoute";
+import commentsRoute from "./routes/lol/commentRoute";
 
 
 // ✅ 새로 추가한 라우터들
@@ -63,6 +64,8 @@ app.use(
 
 // Swagger
 app.use('/api/feed', feeedRoute);
+app.use("/api/comment", commentsRoute);
+
 
 // 🔥 LoL Swagger 라우터
 const lolDocsRouter = express.Router();

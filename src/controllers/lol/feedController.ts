@@ -12,6 +12,13 @@ export const getFeedAll: RequestHandler = async (req, res, next) => {
         feedID: "desc",
       },
       take: 10,
+      include: {
+        Comment: {
+          orderBy: {
+            commentID: "desc",
+          },
+        },
+      },
     });
     res.status(200).json({
       data: result,
@@ -27,6 +34,13 @@ export const getFeed: RequestHandler = async (req, res, next) => {
     const result = await prisma.feed.findUnique({
       where: {
         feedID: String(feedID),
+      },
+      include: {
+        Comment: {
+          orderBy: {
+            commentID: "desc",
+          },
+        },
       },
     });
 
@@ -47,6 +61,8 @@ export const getFeed: RequestHandler = async (req, res, next) => {
 export const createFeed: RequestHandler = async (req, res, next) => {
   try {
     // 유효성 검사
+    const user = req.session;
+    console.log(user);
     const rawData = req.body;
     const vaildData = feedSchema.safeParse(rawData);
     const errorMessage = vaildData.error?.errors[0]?.message;
@@ -56,12 +72,11 @@ export const createFeed: RequestHandler = async (req, res, next) => {
       throw new HttpError(errorMessage || "입력 데이터 에러", 422);
     }
 
-    
     const result = await prisma.feed.create({
       data: {
         content: vaildData.data.content,
         userID: "TEST001",
-        imageUrl: vaildData.data.imageUrl || null, 
+        imageUrl: vaildData.data.imageUrl || null,
       },
     });
 
@@ -115,7 +130,7 @@ export const updateFeed: RequestHandler = async (req, res, next) => {
 export const deleteFeed: RequestHandler = async (req, res, next) => {
   try {
     const { feedID } = req.params;
-    console.log(feedID)
+    console.log(feedID);
     const prevData = await prisma.feed.findUnique({
       where: {
         feedID: String(feedID),
@@ -131,7 +146,7 @@ export const deleteFeed: RequestHandler = async (req, res, next) => {
         feedID: String(feedID),
       },
     });
-    console.log(deleteData)
+    console.log(deleteData);
 
     res.status(200).json({
       data: deleteData,

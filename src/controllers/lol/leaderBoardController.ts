@@ -150,7 +150,7 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
         console.error(`유저 정보 저장 오류: ${entry.puuid}`, err);
       }
 
-      if(count === 2) return
+      // if(count === 2) return
       count++;
       if (count % 95 === 0) {
         console.log("레이트 리밋 대기중... (120초)");

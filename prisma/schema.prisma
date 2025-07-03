@@ -35,7 +35,6 @@ model User {
   point        Int      @default(1000) // 🟡 기본 포인트
 }
 
-
 model Rank {
   id           String  @id @default(auto()) @map("_id") @db.ObjectId
   summonerId   String  @unique
@@ -78,7 +77,7 @@ model Feed {
 }
 
 model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  commentID String   @id @default(auto()) @map("_id") @db.ObjectId
   content   String
   userID    String
   feedID    String   @db.ObjectId
