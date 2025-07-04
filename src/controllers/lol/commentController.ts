@@ -23,16 +23,14 @@ export const getComment: RequestHandler = async (req, res, next) => {
 
 export const createComment: RequestHandler = async (req, res, next) => {
   try {
-    // const user = req.session?.user;
+    const userId = (req.user as any).id;
 
-    // if (!user) {
-    //   return next(new HttpError('로그인이 필요합니다.', 401));
-    // }
+    if (!userId) {
+      return next(new HttpError('로그인이 필요합니다.', 401));
+    }
 
     const rawData = req.body;
-    console.log(rawData)
     const validData = commentSchema.safeParse(rawData);
-    console.log(validData)
     const errorMessage = validData.error?.errors[0]?.message;
 
     if (!validData.success) {
@@ -43,7 +41,7 @@ export const createComment: RequestHandler = async (req, res, next) => {
       data: {
         feedID: rawData.feedID,
         content: validData.data.content,
-        userID: "TEST001",
+        userID: userId,
       },
     });
 

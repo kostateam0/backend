@@ -61,8 +61,7 @@ export const getFeed: RequestHandler = async (req, res, next) => {
 export const createFeed: RequestHandler = async (req, res, next) => {
   try {
     // 유효성 검사
-    const user = req.session;
-    console.log(user);
+    const userId = (req.user as any).id;
     const rawData = req.body;
     const vaildData = feedSchema.safeParse(rawData);
     const errorMessage = vaildData.error?.errors[0]?.message;
@@ -75,7 +74,7 @@ export const createFeed: RequestHandler = async (req, res, next) => {
     const result = await prisma.feed.create({
       data: {
         content: vaildData.data.content,
-        userID: "TEST001",
+        userID: userId,
         imageUrl: vaildData.data.imageUrl || null,
       },
     });
