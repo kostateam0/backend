@@ -4,16 +4,63 @@ import { fetchTeamsBySeries } from "../../services/lol/fetchTeamsBySeries";
 import { fetchLCKRankings } from "../../services/lol/fetchLCKRankings";
 import { fetchGameResults } from "../../services/lol/fetchGameResults";
 import prisma from "../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const getUpcomingMatches = async (req: Request, res: Response) => {
   try {
-    const matches = await fetchUpcomingMatches();
+    const now = new Date();
+
+    /* ① DB에 12시간 내 갱신된 경기 리스트가 있는지 확인 */
+    const cached = await prisma.match.findMany({
+      where: {
+        startTime: { gte: now },
+        updatedAt: { gte: new Date(now.getTime() - 12 * 60 * 60 * 1000) }, // 12h TTL
+      },
+      orderBy: { startTime: "asc" },
+    });
+
+    if (cached.length) {
+      res.status(200).json(cached);   // 바로 반환 (외부 API 호출 X)
+      return;
+    }
+
+    /* ② 없으면 외부 API -> upsert -> 반환 */
+    const apiMatches = await fetchUpcomingMatches();
+
+    await prisma.$transaction(
+      apiMatches.map((m: any) =>
+        prisma.match.upsert({
+          where: { matchId: m.matchId },
+          update: {
+            name: m.name,
+            league: m.league,
+            blueTeam: m.blueTeam,
+            redTeam: m.redTeam,
+            startTime: new Date(m.startTime),
+          },
+          create: {
+            matchId: m.matchId,
+            name: m.name,
+            league: m.league,
+            blueTeam: m.blueTeam,
+            redTeam: m.redTeam,
+            startTime: new Date(m.startTime),
+          },
+        })
+      )
+    );
+
+    const matches = await prisma.match.findMany({
+      where: { startTime: { gte: now } },
+      orderBy: { startTime: "asc" },
+    });
+
     res.status(200).json(matches);
   } catch (error) {
-    console.error("다가올 e스포츠 경기 조회 실패:", error);
-    res
-      .status(500)
-      .json({ message: "e스포츠 경기 정보를 불러오지 못했습니다." });
+    console.error("다가올 경기 저장/조회 실패:", error);
+    res.status(500).json({ message: "e스포츠 경기 정보를 불러오지 못했습니다." });
   }
 };
 

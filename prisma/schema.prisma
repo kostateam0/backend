@@ -24,17 +24,35 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  email        String   @unique
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  email        String      @unique
   password     String
-  provider     String   @default("local")
+  provider     String      @default("local")
   name         String?
-  role         String   @default("user")
-  isBanned     Boolean  @default(false)
+  role         String      @default("user")
+  isBanned     Boolean     @default(false)
   refreshToken String?
-  createdAt    DateTime @default(now())
-  point        Int      @default(1000) // 🟡 기본 포인트
+  createdAt    DateTime    @default(now())
+  point        Int         @default(1000)
+
+  rsoAccount   RsoAccount? @relation("UserRsoRelation")  // ✅ 관계 이름 명시
 }
+
+model RsoAccount {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  puuid     String   @unique
+  gameName  String
+  tagLine   String
+
+  userId    String?  @unique @db.ObjectId  // ✅ 여기에 @unique 추가
+
+  user      User?    @relation("UserRsoRelation", fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
 
 model Rank {
   id           String  @id @default(auto()) @map("_id") @db.ObjectId
@@ -95,6 +113,22 @@ model Bet {
   amount    Int
   userId    String
   createdAt DateTime @default(now())
+
+}
+
+
+model Match {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  matchId   Int      @unique
+  name      String
+  league    String?
+  blueTeam  String?
+  redTeam   String?
+  startTime DateTime
+  result    String?
+  settled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model EsportsRanking {
