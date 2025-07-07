@@ -4,6 +4,7 @@ import {
   getLCKRankings,
   getTeamsBySeries,
   getGameResults,
+  getEsportsRoster,
 } from "../../controllers/lol/esportsController";
 
 const router = express.Router();
@@ -16,4 +17,7 @@ router.get("/teams", getTeamsBySeries); // /api/esports/teams?seriesId=9164
 router.get("/LCKRankings", getLCKRankings); // /api/esports/LCKRankings
 // 최근 경기 결과 조회
 router.get("/gameResults", getGameResults); // /api/esports/gameResults
+
+// 팀 로스터 DB 조회
+router.get("/roster", getEsportsRoster); // /api/esports/roster?league=LCK&season=2025 Spring
 export default router;

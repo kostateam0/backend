@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 export const fetchTeamsBySeries = async (seriesId: number) => {
   const PANDA_API_KEY = process.env.PANDA_API_KEY;
 

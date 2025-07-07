@@ -1,3 +1,28 @@
+// 팀 로스터 DB 조회 API
+export const getEsportsRoster = async (req: Request, res: Response) => {
+  const { league, season } = req.query;
+  if (!league || !season) {
+    res
+      .status(400)
+      .json({ error: "league, season 쿼리 파라미터가 필요합니다." });
+    return;
+  }
+  try {
+    const roster = await prisma.esportsRoster.findFirst({
+      where: { league: String(league), season: String(season) },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (!roster) {
+      res
+        .status(404)
+        .json({ error: "해당 리그/시즌의 로스터 데이터가 없습니다." });
+      return;
+    }
+    res.json(roster.data);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
 import { Request, Response } from "express";
 import { fetchUpcomingMatches } from "../../services/lol/fetchUpcomingMatches";
 import { fetchTeamsBySeries } from "../../services/lol/fetchTeamsBySeries";
