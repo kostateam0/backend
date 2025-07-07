@@ -3,6 +3,7 @@ import {
   getUpcomingMatches,
   getLCKRankings,
   getTeamsBySeries,
+  getGameResults,
 } from "../../controllers/lol/esportsController";
 
 const router = express.Router();
@@ -13,5 +14,6 @@ router.get("/upcoming", getUpcomingMatches); // /api/esports/upcoming
 router.get("/teams", getTeamsBySeries); // /api/esports/teams?seriesId=9164
 // LCK 순위표 조회
 router.get("/LCKRankings", getLCKRankings); // /api/esports/LCKRankings
-
+// 최근 경기 결과 조회
+router.get("/gameResults", getGameResults); // /api/esports/gameResults
 export default router;

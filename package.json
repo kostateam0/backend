@@ -17,6 +17,7 @@
     "auth-kit-backend": "^1.0.9",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "node-cron": "^4.2.0",
     "node-fetch": "^2.7.0",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",

@@ -1,5 +1,6 @@
 import express from "express";
 import session from "express-session";
+import "./jobs/updateLCKRankings";
 import cors from "cors";
 import passport from "passport";
 import dotenv from "dotenv";
