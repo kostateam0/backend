@@ -1,3 +1,4 @@
+
 // // This is your Prisma schema file,
 // // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -94,4 +95,14 @@ model Bet {
   amount    Int
   userId    String
   createdAt DateTime @default(now())
+}
+
+model EsportsRanking {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  league   String   // 예: "LCK"
+  season   String   // 예: "2025 Spring"
+  data     Json     // 순위표 전체 데이터 (TeamStanding[])
+  updatedAt DateTime @updatedAt
+
+  @@unique([league, season], name: "league_season")
 }
