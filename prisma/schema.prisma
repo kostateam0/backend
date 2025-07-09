@@ -1,4 +1,5 @@
 
+
 // // This is your Prisma schema file,
 // // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -154,4 +155,14 @@ model EsportsRanking {
   updatedAt DateTime @updatedAt
 
   @@unique([league, season], name: "league_season")
+}
+
+model EsportsRoster {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  league   String   // 예: "LCK"
+  season   String   // 예: "2025 Spring"
+  data     Json     // 전체 팀/선수 로스터 데이터
+  updatedAt DateTime @updatedAt
+
+  @@unique([league, season], name: "league_season_roster")
 }
