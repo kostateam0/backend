@@ -36,8 +36,14 @@ model User {
   createdAt    DateTime    @default(now())
   point        Int         @default(1000)
 
-  rsoAccount   RsoAccount? @relation("UserRsoRelation")  // ✅ 관계 이름 명시
+  rsoAccount   RsoAccount? @relation("UserRsoRelation")
+
+  // 🔽 추가 관계 필드들
+  bets         Bet[]       @relation("UserBets")
+  feeds        Feed[]      @relation("UserFeeds")
+  comments     Comment[]   @relation("UserComments")
 }
+
 
 model RsoAccount {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -94,6 +100,8 @@ model Feed {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   Comment   Comment[]
+
+  user      User      @relation("UserFeeds", fields: [userID], references: [id])
 }
 
 model Comment {
@@ -105,6 +113,7 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   feed Feed @relation(fields: [feedID], references: [feedID])
+  user      User     @relation("UserComments", fields: [userID], references: [id])
 }
 
 model Bet {
@@ -115,22 +124,28 @@ model Bet {
   userId    String
   createdAt DateTime @default(now())
 
+  user      User     @relation("UserBets", fields: [userId], references: [id])
 }
 
 
 model Match {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  matchId   Int      @unique
-  name      String
-  league    String?
-  blueTeam  String?
-  redTeam   String?
-  startTime DateTime
-  result    String?
-  settled   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  matchId        Int      @unique
+  name           String
+  league         String
+  blueTeam       String?
+  redTeam        String?
+  startTime      DateTime
+  endTime        DateTime?
+  winner         String?
+  /** 새로 추가 ↓ */
+  settled        Boolean  @default(false)   // 베팅 정산 여부
+  result         String?                   // "blue" | "red" 등
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
+
+
 
 model EsportsRanking {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

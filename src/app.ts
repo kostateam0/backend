@@ -8,6 +8,7 @@ dotenv.config();
 
 import AuthKit from "auth-kit-backend"; // ✅ 핵심
 
+
 import summonerRoute from "./routes/lol/summonerRoute";
 import matchRoute from "./routes/lol/matchRoute";
 import leaderBoardRoute from "./routes/lol/leaderBoardRoute";
@@ -21,10 +22,16 @@ import commentsRoute from "./routes/lol/commentRoute";
 // ✅ 새로 추가한 라우터들
 import betRoute from "./routes/lol/betRoute";
 import esportsRoute from "./routes/lol/esportsRoute";
-
+import { PrismaClient } from "@prisma/client"; 
 const app = express();
 
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(
   session({
     secret: "your-secret",
@@ -32,16 +39,12 @@ app.use(
     saveUninitialized: false,
   })
 );
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+
 
 app.use(passport.initialize());
 app.use(passport.session());
 
+const prisma = new PrismaClient();
 // 실제 API
 app.use("/api/summoner", summonerRoute);
 app.use("/api/match", matchRoute);
@@ -52,14 +55,8 @@ app.use("/api/bet", betRoute); // 베팅 관련 API
 app.use("/api/esports", esportsRoute); // ✅ 등록 완료 → /api/esports/upcoming
 
 // ✅ AuthKit 전체 라우터를 한 번에 등록
-app.use(
-  "/authkit",
-  (req, res, next) => {
-    console.log("✅ AuthKit 요청:", req.method, req.path);
-    next();
-  },
-  AuthKit()
-);
+app.use("/authkit", AuthKit(prisma)); 
+// app.use("/api/user",userRoute);
 
 // Swagger
 app.use("/api/feed", feeedRoute);

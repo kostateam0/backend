@@ -17,4 +17,14 @@ declare module 'auth-kit-backend/dist/routes/authRouter' {
     const router: Router;
     export default router;
   }
+
+  // types/auth-kit-backend.d.ts
+declare module 'auth-kit-backend' {
+  import { PrismaClient } from '@prisma/client';
+  import { Router } from 'express';
+
+  const authKit: (prisma: PrismaClient) => Router;
+  export default authKit;
+}
+
   

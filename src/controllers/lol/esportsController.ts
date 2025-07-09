@@ -28,7 +28,7 @@ import { fetchUpcomingMatches } from "../../services/lol/fetchUpcomingMatches";
 import { fetchTeamsBySeries } from "../../services/lol/fetchTeamsBySeries";
 import { fetchLCKRankings } from "../../services/lol/fetchLCKRankings";
 import { fetchGameResults } from "../../services/lol/fetchGameResults";
-import prisma from "../../lib/prisma";
+import { fetchPastMatches } from "../../services/lol/fetchPastMatches";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -86,6 +86,68 @@ export const getUpcomingMatches = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("다가올 경기 저장/조회 실패:", error);
     res.status(500).json({ message: "e스포츠 경기 정보를 불러오지 못했습니다." });
+  }
+};
+// ✅ NEW : 과거 경기 조회
+export const getPastMatches = async (req: Request, res: Response) => {
+  try {
+    const now = new Date();
+
+    /* ① DB 캐시(12h) 확인 ― 가장 최근 12시간 안에 갱신된 기록 */
+    const cached = await prisma.match.findMany({
+      where: {
+        endTime: { lte: now },
+        updatedAt: { gte: new Date(now.getTime() - 12 * 60 * 60 * 1000) },
+      },
+      orderBy: { startTime: "desc" },
+      take: 30,
+    });
+
+    if (cached.length) {
+      res.json(cached);
+      return;
+    }
+
+    /* ② 없으면 외부 API → upsert → DB에서 다시 조회 */
+    const apiMatches = await fetchPastMatches();
+
+    await prisma.$transaction(
+      apiMatches.map((m :any) =>
+        prisma.match.upsert({
+          where: { matchId: m.matchId },
+          update: {
+            name: m.name,
+            league: m.league,
+            blueTeam: m.blueTeam,
+            redTeam: m.redTeam,
+            winner: m.winner,
+            startTime: new Date(m.startTime),
+            endTime: new Date(m.endTime),
+          },
+          create: {
+            matchId: m.matchId,
+            name: m.name,
+            league: m.league,
+            blueTeam: m.blueTeam,
+            redTeam: m.redTeam,
+            winner: m.winner,
+            startTime: new Date(m.startTime),
+            endTime: new Date(m.endTime),
+          },
+        })
+      )
+    );
+
+    const matches = await prisma.match.findMany({
+      where: { endTime: { lte: now } },
+      orderBy: { startTime: "desc" },
+      take: 30,
+    });
+
+    res.json(matches);
+  } catch (error) {
+    console.error("과거 경기 저장/조회 실패:", error);
+    res.status(500).json({ message: "과거 경기 정보를 불러오지 못했습니다." });
   }
 };
 
