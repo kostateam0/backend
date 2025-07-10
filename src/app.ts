@@ -5,7 +5,7 @@ import cors from "cors";
 import passport from "passport";
 import dotenv from "dotenv";
 dotenv.config();
-
+import "./jobs";
 import AuthKit from "auth-kit-backend"; // ✅ 핵심
 
 

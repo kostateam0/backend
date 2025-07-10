@@ -63,56 +63,56 @@ export const getBetStats: RequestHandler = async (req, res) => {
 };
 
 /* ───────────────────────── 3. 경기 정산 ───────────────────────── */
-export const settleMatch: RequestHandler = async (req, res) => {
-  try {
-    const matchId = Number(req.params.matchId);
-    if (!matchId) { res.status(400).json({ message: "matchId가 필요합니다." }); return; }
+// export const settleMatch: RequestHandler = async (req, res) => {
+//   try {
+//     const matchId = Number(req.params.matchId);
+//     if (!matchId) { res.status(400).json({ message: "matchId가 필요합니다." }); return; }
 
-    const match = await prisma.match.findUnique({ where: { matchId } });
-    if (!match)               { res.status(404).json({ message: "경기를 찾을 수 없습니다." }); return; }
-    if (match.settled)        { res.status(400).json({ message: "이미 정산된 경기입니다." }); return; }
-    if (!["blue", "red"].includes(match.result ?? "")) {
-      res.status(400).json({ message: "result가 설정되지 않았습니다." }); return;
-    }
+//     const match = await prisma.match.findUnique({ where: { matchId } });
+//     if (!match)               { res.status(404).json({ message: "경기를 찾을 수 없습니다." }); return; }
+//     if (match.settled)        { res.status(400).json({ message: "이미 정산된 경기입니다." }); return; }
+//     if (!["blue", "red"].includes(match.result ?? "")) {
+//       res.status(400).json({ message: "result가 설정되지 않았습니다." }); return;
+//     }
 
-    /* ① 전체 베팅 로드 */
-    const bets     = await prisma.bet.findMany({ where: { matchId } });
-    const winners  = bets.filter(b => b.team === match.result);
-    const losers   = bets.filter(b => b.team !== match.result);
+//     /* ① 전체 베팅 로드 */
+//     const bets     = await prisma.bet.findMany({ where: { matchId } });
+//     const winners  = bets.filter(b => b.team === match.result);
+//     const losers   = bets.filter(b => b.team !== match.result);
 
-    const losePool = losers.reduce((s, b) => s + b.amount, 0);
+//     const losePool = losers.reduce((s, b) => s + b.amount, 0);
 
-    /* ② 보너스 계산: 패자 풀을 승자 수로 균등 분배 */
-    const bonusPerWinner = winners.length ? Math.floor(losePool / winners.length) : 0;
-    let   remainder      = winners.length ? losePool % winners.length : 0;
+//     /* ② 보너스 계산: 패자 풀을 승자 수로 균등 분배 */
+//     const bonusPerWinner = winners.length ? Math.floor(losePool / winners.length) : 0;
+//     let   remainder      = winners.length ? losePool % winners.length : 0;
 
-    /* ③ 승자 원금+보너스 지급 */
-    const updateOps = winners.map((bet, idx) => {
-      const extra = remainder > 0 ? 1 : 0;  // remainder를 앞에서부터 +1
-      if (remainder > 0) remainder -= 1;
+//     /* ③ 승자 원금+보너스 지급 */
+//     const updateOps = winners.map((bet, idx) => {
+//       const extra = remainder > 0 ? 1 : 0;  // remainder를 앞에서부터 +1
+//       if (remainder > 0) remainder -= 1;
 
-      const increment = bet.amount + bonusPerWinner + extra; // 원금+보너스
-      return prisma.user.update({
-        where: { id: bet.userId },
-        data:  { point: { increment } },
-      });
-    });
+//       const increment = bet.amount + bonusPerWinner + extra; // 원금+보너스
+//       return prisma.user.update({
+//         where: { id: bet.userId },
+//         data:  { point: { increment } },
+//       });
+//     });
 
-    /* ④ 트랜잭션 실행 */
-    await prisma.$transaction([
-      ...updateOps,
-      prisma.match.update({ where: { matchId }, data: { settled: true } }),
-    ]);
+//     /* ④ 트랜잭션 실행 */
+//     await prisma.$transaction([
+//       ...updateOps,
+//       prisma.match.update({ where: { matchId }, data: { settled: true } }),
+//     ]);
 
-    res.status(200).json({
-      message: "✅ 정산 완료",
-      winners: winners.length,
-      bonusPerWinner,
-      remainderDistributed: losers.length ? losePool % winners.length : 0,
-    });
-    return;
-  } catch (err) {
-    console.error("❌ 정산 실패:", err);
-    res.status(500).json({ message: "서버 오류: 정산 실패" }); return;
-  }
-};
+//     res.status(200).json({
+//       message: "✅ 정산 완료",
+//       winners: winners.length,
+//       bonusPerWinner,
+//       remainderDistributed: losers.length ? losePool % winners.length : 0,
+//     });
+//     return;
+//   } catch (err) {
+//     console.error("❌ 정산 실패:", err);
+//     res.status(500).json({ message: "서버 오류: 정산 실패" }); return;
+//   }
+// };
