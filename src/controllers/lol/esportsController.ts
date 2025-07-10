@@ -29,6 +29,7 @@ import { fetchTeamsBySeries } from "../../services/lol/fetchTeamsBySeries";
 import { fetchLCKRankings } from "../../services/lol/fetchLCKRankings";
 import { fetchGameResults } from "../../services/lol/fetchGameResults";
 import prisma from "../../lib/prisma";
+import { fetchPastMatches } from "../../services/lol/fetchPastMatches";
 
 export const getUpcomingMatches = async (req: Request, res: Response) => {
   try {
