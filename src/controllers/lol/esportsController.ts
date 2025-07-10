@@ -29,9 +29,6 @@ import { fetchTeamsBySeries } from "../../services/lol/fetchTeamsBySeries";
 import { fetchLCKRankings } from "../../services/lol/fetchLCKRankings";
 import { fetchGameResults } from "../../services/lol/fetchGameResults";
 import prisma from "../../lib/prisma";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export const getUpcomingMatches = async (req: Request, res: Response) => {
   try {
@@ -47,7 +44,7 @@ export const getUpcomingMatches = async (req: Request, res: Response) => {
     });
 
     if (cached.length) {
-      res.status(200).json(cached);   // 바로 반환 (외부 API 호출 X)
+      res.status(200).json(cached); // 바로 반환 (외부 API 호출 X)
       return;
     }
 
@@ -85,7 +82,9 @@ export const getUpcomingMatches = async (req: Request, res: Response) => {
     res.status(200).json(matches);
   } catch (error) {
     console.error("다가올 경기 저장/조회 실패:", error);
-    res.status(500).json({ message: "e스포츠 경기 정보를 불러오지 못했습니다." });
+    res
+      .status(500)
+      .json({ message: "e스포츠 경기 정보를 불러오지 못했습니다." });
   }
 };
 
