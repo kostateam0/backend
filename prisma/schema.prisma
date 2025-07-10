@@ -92,7 +92,7 @@ model Profile {
 model Feed {
   feedID    String    @id @default(auto()) @map("_id") @db.ObjectId
   content   String
-  userID    String
+  userID    String   @db.ObjectId
   imageUrl  String?   @default("")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

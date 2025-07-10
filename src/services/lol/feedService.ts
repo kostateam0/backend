@@ -7,6 +7,12 @@ export const getAllFeeds = async (userID?: string) => {
     include: {
       Comment: { orderBy: { commentID: "desc" } },
       _count: { select: { likes: true } },
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 

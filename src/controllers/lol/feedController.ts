@@ -3,7 +3,8 @@ import { feedSchema } from "../../models/lol/feedSchema";
 import { HttpError } from "../../utils/HttpError";
 import prisma from "../../lib/prisma";
 import * as feedService from "../../services/lol/feedService";
-
+import multer from "multer";
+import cloudinary from "../../lib/cloudinary";
 interface PassportSession {
   cookie: any;
   passport?: {
@@ -23,6 +24,7 @@ export const getFeeds: RequestHandler = async (req, res, next) => {
   try {
     const userID = (req.user as any)?.id;
     const feeds = await feedService.getAllFeeds(userID);
+    console.log(feeds);
     res.status(200).json({ data: feeds });
   } catch (error) {
     return next(new HttpError("서버 오류가 발생했습니다.", 500));
@@ -45,9 +47,16 @@ export const getFeed: RequestHandler = async (req, res, next) => {
         _count: {
           select: { likes: true },
         },
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
+    console.log(result);
     if (!result) {
       return next(new HttpError("데이터가 없습니다.", 404));
     }
@@ -77,35 +86,60 @@ export const getFeed: RequestHandler = async (req, res, next) => {
   }
 };
 
+// multer 인스턴스 생성
+
+export const upload = multer({ storage: multer.memoryStorage() });
+
 export const createFeed: RequestHandler = async (req, res, next) => {
   try {
-    // 유효성 검사
     const userID = (req.user as any)?.id;
-    const rawData = req.body;
-    const vaildData = feedSchema.safeParse(rawData);
-    const errorMessage = vaildData.error?.errors[0]?.message;
+    const { content, privacy } = req.body;
 
-    if (!vaildData.success) {
-      // return next(new HttpError(errorMessage || "입력 데이터 에러", 422));
-      throw new HttpError(errorMessage || "입력 데이터 에러", 422);
+    const files = req.files as Express.Multer.File[] | undefined;
+
+    const imageUrls: string[] = [];
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const uploadResult = await new Promise<string>((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "feeds" },
+            (error, result) => {
+              if (error || !result) return reject(error);
+              resolve(result.secure_url);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        imageUrls.push(uploadResult);
+      }
+    }
+
+    const rawData = {
+      content,
+      imageUrl: imageUrls.length > 0 ? imageUrls.join(",") : undefined,
+    };
+
+    const validated = feedSchema.safeParse(rawData);
+    if (!validated.success) {
+      throw new HttpError(
+        validated.error.errors[0]?.message || "입력 데이터 에러",
+        422
+      );
     }
 
     const result = await prisma.feed.create({
       data: {
-        content: vaildData.data.content,
-        userID: userID,
-        imageUrl: vaildData.data.imageUrl || null,
+        content: validated.data.content,
+        userID,
+        imageUrl: imageUrls.length > 0 ? imageUrls.join(",") : null,
       },
     });
 
-    res.status(201).json({
-      result: result,
-      message: "피드 생성 성공",
-    });
+    res.status(201).json({ result, message: "피드 생성 성공" });
   } catch (error) {
-    if (error instanceof HttpError) {
-      return next(error);
-    }
+    if (error instanceof HttpError) return next(error);
+
     console.error("피드 생성 중 오류 발생:", error);
     return next(new HttpError("피드 생성 중 오류 발생", 500));
   }
