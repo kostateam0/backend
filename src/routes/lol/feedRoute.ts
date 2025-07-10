@@ -3,10 +3,13 @@ import * as feedController from "../../controllers/lol/feedController";
 
 const router = Router();
 
-router.get("/", feedController.getFeedAll);
+router.get("/", feedController.getFeeds);
 router.get("/:feedID", feedController.getFeed);
 router.post("/", feedController.createFeed);
 router.put("/:feedID", feedController.updateFeed);
 router.delete("/:feedID", feedController.deleteFeed);
 
+router.post("/:feedID/like", feedController.toggleFeedLike);
+router.get("/:feedID/likes", feedController.getFeedLikes);
+router.get("/:feedID/isLiked", feedController.isFeedLiked);
 export default router;

@@ -1,59 +1,78 @@
 import { RequestHandler } from "express";
 import { feedSchema } from "../../models/lol/feedSchema";
 import { HttpError } from "../../utils/HttpError";
+import prisma from "../../lib/prisma";
+import * as feedService from "../../services/lol/feedService";
 
-import { Prisma, PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+interface PassportSession {
+  cookie: any;
+  passport?: {
+    user?: string;
+  };
+}
 
-export const getFeedAll: RequestHandler = async (req, res, next) => {
+// const getUserIDFromSession = (req: any): string | null => {
+//   const session = req.session as PassportSession;
+//   if (session && session.passport && session.passport.user) {
+//     return session.passport.user;
+//   }
+//   return null;
+// };
+
+export const getFeeds: RequestHandler = async (req, res, next) => {
   try {
-    const result = await prisma.feed.findMany({
-      orderBy: {
-        feedID: "desc",
-      },
-      take: 10,
-      include: {
-        Comment: {
-          orderBy: {
-            commentID: "desc",
-          },
-        },
-      },
-    });
-    res.status(200).json({
-      data: result,
-    });
+    const userID = (req.user as any)?.id;
+    const feeds = await feedService.getAllFeeds(userID);
+    res.status(200).json({ data: feeds });
   } catch (error) {
     return next(new HttpError("서버 오류가 발생했습니다.", 500));
   }
 };
 
 export const getFeed: RequestHandler = async (req, res, next) => {
+  const userID = (req.user as any)?.id;
+  const { feedID } = req.params;
+
   try {
-    const { feedID } = req.params;
     const result = await prisma.feed.findUnique({
-      where: {
-        feedID: String(feedID),
-      },
+      where: { feedID: String(feedID) },
       include: {
         Comment: {
           orderBy: {
             commentID: "desc",
           },
         },
+        _count: {
+          select: { likes: true },
+        },
       },
     });
 
-    // db 에러 처리
     if (!result) {
       return next(new HttpError("데이터가 없습니다.", 404));
     }
 
+    let liked = false;
+    if (userID) {
+      const like = await prisma.like.findUnique({
+        where: {
+          userID_feedID: {
+            userID,
+            feedID: String(feedID),
+          },
+        },
+      });
+      liked = !!like;
+    }
+
     res.status(200).json({
-      data: result,
+      data: {
+        ...result,
+        likedCount: result._count.likes,
+        isLiked: liked,
+      },
     });
   } catch (error) {
-    console.log(error);
     return next(new HttpError("서버 오류가 발생했습니다.", 500));
   }
 };
@@ -61,7 +80,7 @@ export const getFeed: RequestHandler = async (req, res, next) => {
 export const createFeed: RequestHandler = async (req, res, next) => {
   try {
     // 유효성 검사
-    const userId = (req.user as any).id;
+    const userID = (req.user as any)?.id;
     const rawData = req.body;
     const vaildData = feedSchema.safeParse(rawData);
     const errorMessage = vaildData.error?.errors[0]?.message;
@@ -74,7 +93,7 @@ export const createFeed: RequestHandler = async (req, res, next) => {
     const result = await prisma.feed.create({
       data: {
         content: vaildData.data.content,
-        userID: userId,
+        userID: userID,
         imageUrl: vaildData.data.imageUrl || null,
       },
     });
@@ -129,7 +148,6 @@ export const updateFeed: RequestHandler = async (req, res, next) => {
 export const deleteFeed: RequestHandler = async (req, res, next) => {
   try {
     const { feedID } = req.params;
-    console.log(feedID);
     const prevData = await prisma.feed.findUnique({
       where: {
         feedID: String(feedID),
@@ -145,12 +163,88 @@ export const deleteFeed: RequestHandler = async (req, res, next) => {
         feedID: String(feedID),
       },
     });
-    console.log(deleteData);
 
     res.status(200).json({
       data: deleteData,
     });
   } catch (error) {
     return next(new HttpError("서버 오류가 발생했습니다.", 500));
+  }
+};
+
+export const toggleFeedLike: RequestHandler = async (req, res, next) => {
+  const userID = (req.user as any).id;
+  const { feedID } = req.params;
+
+  try {
+    const existing = await prisma.like.findUnique({
+      where: {
+        userID_feedID: {
+          userID,
+          feedID,
+        },
+      },
+    });
+
+    if (existing) {
+      await prisma.like.delete({
+        where: {
+          userID_feedID: {
+            userID,
+            feedID,
+          },
+        },
+      });
+
+      res.status(200).json({ message: "좋아요 취소됨", liked: false });
+    } else {
+      await prisma.like.create({
+        data: {
+          userID,
+          feedID,
+        },
+      });
+
+      res.status(200).json({ message: "좋아요 추가됨", liked: true });
+    }
+  } catch (err) {
+    console.error("좋아요 토글 오류:", err);
+    return next(new HttpError("좋아요 처리 중 오류 발생", 500));
+  }
+};
+
+export const getFeedLikes: RequestHandler = async (req, res, next) => {
+  const { feedID } = req.params;
+
+  try {
+    const count = await prisma.like.count({
+      where: { feedID },
+    });
+
+    res.status(200).json({ count });
+  } catch (err) {
+    console.error(err);
+    return next(new HttpError("좋아요 수 조회 실패", 500));
+  }
+};
+
+export const isFeedLiked: RequestHandler = async (req, res, next) => {
+  const userID = (req.user as any).id;
+  const { feedID } = req.params;
+
+  try {
+    const like = await prisma.like.findUnique({
+      where: {
+        userID_feedID: {
+          userID,
+          feedID,
+        },
+      },
+    });
+
+    res.status(200).json({ liked: !!like });
+  } catch (err) {
+    console.error(err);
+    return next(new HttpError("좋아요 여부 확인 실패", 500));
   }
 };

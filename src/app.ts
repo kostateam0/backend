@@ -58,6 +58,15 @@ app.use("/api/esports", esportsRoute); // ✅ 등록 완료 → /api/esports/upc
 app.use("/authkit", AuthKit(prisma)); 
 // app.use("/api/user",userRoute);
 
+// 실제 API
+app.use("/api/summoner", summonerRoute);
+app.use("/api/match", matchRoute);
+app.use("/api/lol/leaderboard", leaderBoardRoute);
+
+// ✅ 베팅 및 e스포츠 API
+app.use("/api/bet", betRoute); // 베팅 관련 API
+app.use("/api/esports", esportsRoute); // ✅ 등록 완료 → /api/esports/upcoming
+
 // Swagger
 app.use("/api/feed", feeedRoute);
 app.use("/api/comment", commentsRoute);
