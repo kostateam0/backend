@@ -28,17 +28,23 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      'http://localhost:3000', // ✅ 웹
+      'file://',               // ✅ Electron 파일 기반
+    ],
     credentials: true,
   })
 );
-app.use(
-  session({
-    secret: "your-secret",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
+app.use(session({
+  secret: "your-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false,      // ❌ HTTPS 아님
+    sameSite: "lax",    // Electron은 strict 사용 시 쿠키 거부
+  },
+}));
 
 
 app.use(passport.initialize());
