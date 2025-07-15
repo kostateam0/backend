@@ -10,7 +10,7 @@ export const getLeaderBoard: RequestHandler = async (req, res) => {
       orderBy: {
         leaguePoints: "desc",
       },
-      // resquest에 따라 limit, offset 등을 추가할 수 있음      
+      // resquest에 따라 limit, offset 등을 추가할 수 있음
       include: {
         profile: true, // puuid 기준으로 profile 테이블 조인
       },
@@ -18,7 +18,6 @@ export const getLeaderBoard: RequestHandler = async (req, res) => {
 
     // 필요한 데이터만 가공해서 전달
     const data = leaderboard.map((rank) => ({
-      summonerId: rank.summonerId,
       puuid: rank.puuid,
       leaguePoints: rank.leaguePoints,
       rank: rank.rank,
@@ -76,7 +75,7 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
     for (const entry of entries) {
       // 랭킹 정보 저장
       await prisma.rank.upsert({
-        where: { summonerId: entry.summonerId },
+        where: { puuid: entry.puuid },
         update: {
           leaguePoints: entry.leaguePoints,
           rank: entry.rank,
@@ -88,7 +87,6 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
           hotStreak: entry.hotStreak,
         },
         create: {
-          summonerId: entry.summonerId,
           puuid: entry.puuid,
           leaguePoints: entry.leaguePoints,
           rank: entry.rank,
@@ -104,6 +102,13 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
       // 유저 정보 저장 (레이트 리밋 고려)
       try {
         // 1. 소환사 이미지 및 레벨 관련 정보
+
+        // {
+        //   "puuid": "e8FaLfQtQbfOdFY3kIpS4TLUFT8TFDgOSwdz1QUVFPeJeXBuhS9lp0bt32MtjE38J2jJnXJomclErQ",
+        //   "profileIconId": 6592,
+        //   "revisionDate": 1752597550796,
+        //   "summonerLevel": 896
+        // }
         const summonerRes = await fetch(
           `https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${entry.puuid}`,
           {
@@ -112,6 +117,11 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
         );
 
         // 2. Riot ID 기반 게임 닉네임
+        //         {
+        //   "puuid": "e8FaLfQtQbfOdFY3kIpS4TLUFT8TFDgOSwdz1QUVFPeJeXBuhS9lp0bt32MtjE38J2jJnXJomclErQ",
+        //   "gameName": "DK Sharvel",
+        //   "tagLine": "KR1"
+        // }
         const accountRes = await fetch(
           `https://asia.api.riotgames.com/riot/account/v1/accounts/by-puuid/${entry.puuid}`,
           {
@@ -132,10 +142,8 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
               profileIconId: summonerData.profileIconId,
               summonerLevel: summonerData.summonerLevel,
               revisionDate: summonerData.revisionDate,
-              accountId: entry.summonerId,
             },
             create: {
-              accountId: entry.summonerId,
               summonerName: accountData.gameName,
               puuid: entry.puuid,
               profileIconId: summonerData.profileIconId,
@@ -150,8 +158,8 @@ export const saveLeaderBoard: RequestHandler = async (req, res) => {
         console.error(`유저 정보 저장 오류: ${entry.puuid}`, err);
       }
 
-      // if(count === 2) return
-      count++;
+      if (count === 2) return;
+      // count++;
       if (count % 95 === 0) {
         console.log("레이트 리밋 대기중... (120초)");
         await delay(120_000); // 2분 대기

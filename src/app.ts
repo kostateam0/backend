@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      'http://localhost:3000', // ✅ 웹
+      'http://localhost:5173', // ✅ 웹
       'file://',               // ✅ Electron 파일 기반
     ],
     credentials: true,

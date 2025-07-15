@@ -60,7 +60,6 @@ model RsoAccount {
 
 model Rank {
   id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  summonerId   String  @unique
   puuid        String  @unique
   leaguePoints Int
   rank         String
@@ -78,7 +77,6 @@ model Rank {
 
 model Profile {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  accountId     String   @unique
   puuid         String   @unique
   summonerName  String
   profileIconId Int
